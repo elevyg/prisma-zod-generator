@@ -12,7 +12,7 @@ jobs:
         with:
           node-version: '16.x'
           registry-url: 'https://registry.npmjs.org'
-          scope: '@conte'
+          scope: '@conte-ltd'
       - name: Install Dependency Packages
         run: yarn
       - name: Build
