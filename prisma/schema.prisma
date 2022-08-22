@@ -9,7 +9,7 @@ datasource db {
 
 generator zod {
   provider = "node ./lib/generator.js"
-  output   = "../src/generated"
+  output   = "./generated"
 }
 
 model User {
