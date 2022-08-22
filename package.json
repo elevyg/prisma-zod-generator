@@ -2,14 +2,14 @@
   "name": "@conte/prisma-zod-generator",
   "version": "0.0.1",
   "description": "Prisma 2+ generator to emit Zod schemas from your Prisma schema",
-  "repository": "https://github.com/omar-dulaimi/prisma-zod-generator",
+  "repository": "https://github.com/conte-ltd/prisma-zod-generator",
   "bin": {
     "prisma-zod-generator": "lib/generator.js"
   },
   "scripts": {
     "build": "tsc",
-    "gen-example": "tsc && npx prisma generate",
-    "package:publish": "./package.sh && cd package && npm publish"
+    "gen-example": "yarn build && npx prisma generate",
+    "package:publish": "yarn build && ./package.sh && cd package && npm publish"
   },
   "author": {
     "name": "CONTE, Ltd.",
@@ -40,8 +40,8 @@
     "ts-node": "^10.9.1"
   },
   "bugs": {
-    "url": "https://github.com/omar-dulaimi/prisma-zod-generator/issues"
+    "url": "https://github.com/conte-ltd/prisma-zod-generator/issues"
   },
-  "homepage": "https://github.com/omar-dulaimi/prisma-zod-generator#readme",
+  "homepage": "https://github.com/conte-ltd/prisma-zod-generator#readme",
   "private": true
 }

@@ -4,3 +4,4 @@ package
 npm-debug.log*
 src/generated
 .idea
+.DS_Store
