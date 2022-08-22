@@ -2,6 +2,7 @@ import type { DMMF as PrismaDMMF } from '@prisma/generator-helper';
 import path from 'path';
 import { TransformerParams } from './types';
 import { writeFileSafely } from './utils/writeFileSafely';
+import {appendFileSafely} from './utils/appendFileSafely';
 
 export default class Transformer {
   name: string;
@@ -234,8 +235,9 @@ export default class Transformer {
   }
 
   addExportObjectSchema(schema: string) {
-    const end = `export const ${this.name}ObjectSchema = Schema`;
-    return `const Schema: z.ZodType<Prisma.${this.name}> = ${schema};\n\n ${end}`;
+    const schemaName = `${this.name}ObjectSchema`
+    const end = `export const ${schemaName}: z.ZodType<Prisma.${this.name}> = ${schemaName}Base`;
+    return `export const ${schemaName}Base = ${schema};\n\n ${end}`;
   }
 
   addExportSchema(schema: string, name: string) {
@@ -317,9 +319,17 @@ export default class Transformer {
 
       this.getFinalForm(zodStringFields),
     );
+
+    await appendFileSafely(path.join(Transformer.outputPath, `schemas/objects/index.ts`),
+      `export * from './${this.name}.schema'\n`
+    );
   }
 
   async printModelSchemas() {
+    await appendFileSafely(path.join(Transformer.outputPath, `schemas/index.ts`),
+      `export * from './enums'\nexport * from './objects'\n`
+    );
+    
     for (const model of this.modelOperations) {
       const {
         model: modelName,
@@ -352,6 +362,10 @@ export default class Transformer {
             `${modelName}FindUnique`,
           )}`,
         );
+
+        await appendFileSafely(path.join(Transformer.outputPath, `schemas/index.ts`),
+          `export * from './${findUnique}.schema'\n`
+        );
       }
 
       if (findFirst) {
@@ -367,6 +381,10 @@ export default class Transformer {
             `z.object({ where: ${modelName}WhereInputObjectSchema.optional(), orderBy: ${modelName}OrderByWithRelationInputObjectSchema.optional(), cursor: ${modelName}WhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), distinct: z.array(${modelName}ScalarFieldEnumSchema).optional() })`,
             `${modelName}FindFirst`,
           )}`,
+        );
+
+        await appendFileSafely(path.join(Transformer.outputPath, `schemas/index.ts`),
+          `export * from './${findFirst}.schema'\n`
         );
       }
 
@@ -384,6 +402,10 @@ export default class Transformer {
             `${modelName}FindMany`,
           )}`,
         );
+
+        await appendFileSafely(path.join(Transformer.outputPath, `schemas/index.ts`),
+          `export * from './${findMany}.schema'\n`
+        );
       }
 
       if (createOne) {
@@ -396,6 +418,10 @@ export default class Transformer {
             `z.object({ data: ${modelName}CreateInputObjectSchema  })`,
             `${modelName}CreateOne`,
           )}`,
+        );
+
+        await appendFileSafely(path.join(Transformer.outputPath, `schemas/index.ts`),
+          `export * from './${createOne}.schema'\n`
         );
       }
 
@@ -410,6 +436,10 @@ export default class Transformer {
             `${modelName}CreateMany`,
           )}`,
         );
+
+        await appendFileSafely(path.join(Transformer.outputPath, `schemas/index.ts`),
+          `export * from './${createMany}.schema'\n`
+        );
       }
 
       if (deleteOne) {
@@ -423,6 +453,10 @@ export default class Transformer {
             `${modelName}DeleteOne`,
           )}`,
         );
+
+        await appendFileSafely(path.join(Transformer.outputPath, `schemas/index.ts`),
+          `export * from './${deleteOne}.schema'\n`
+        );
       }
 
       if (deleteMany) {
@@ -435,6 +469,10 @@ export default class Transformer {
             `z.object({ where: ${modelName}WhereInputObjectSchema.optional()  })`,
             `${modelName}DeleteMany`,
           )}`,
+        );
+
+        await appendFileSafely(path.join(Transformer.outputPath, `schemas/index.ts`),
+          `export * from './${deleteMany}.schema'\n`
         );
       }
 
@@ -450,6 +488,10 @@ export default class Transformer {
             `${modelName}UpdateOne`,
           )}`,
         );
+
+        await appendFileSafely(path.join(Transformer.outputPath, `schemas/index.ts`),
+          `export * from './${updateOne}.schema'\n`
+        );
       }
 
       if (updateMany) {
@@ -463,6 +505,10 @@ export default class Transformer {
             `z.object({ data: ${modelName}UpdateManyMutationInputObjectSchema, where: ${modelName}WhereInputObjectSchema.optional()  })`,
             `${modelName}UpdateMany`,
           )}`,
+        );
+
+        await appendFileSafely(path.join(Transformer.outputPath, `schemas/index.ts`),
+          `export * from './${updateMany}.schema'\n`
         );
       }
 
@@ -479,6 +525,10 @@ export default class Transformer {
             `${modelName}Upsert`,
           )}`,
         );
+
+        await appendFileSafely(path.join(Transformer.outputPath, `schemas/index.ts`),
+          `export * from './${upsertOne}.schema'\n`
+        );
       }
 
       if (aggregate) {
@@ -493,6 +543,10 @@ export default class Transformer {
             `z.object({ where: ${modelName}WhereInputObjectSchema.optional(), orderBy: ${modelName}OrderByWithRelationInputObjectSchema.optional(), cursor: ${modelName}WhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional()  })`,
             `${modelName}Aggregate`,
           )}`,
+        );
+
+        await appendFileSafely(path.join(Transformer.outputPath, `schemas/index.ts`),
+          `export * from './${aggregate}.schema'\n`
         );
       }
 
@@ -510,6 +564,10 @@ export default class Transformer {
             `${modelName}GroupBy`,
           )}`,
         );
+
+        await appendFileSafely(path.join(Transformer.outputPath, `schemas/index.ts`),
+          `export * from './${groupBy}.schema'\n`
+        );
       }
     }
   }
@@ -525,6 +583,10 @@ export default class Transformer {
           `${name}`,
         )}`,
       );
+      
+      await appendFileSafely(path.join(Transformer.outputPath, `schemas/enums/index.ts`),
+        `export * from './${name}.schema'\n`
+        );
     }
   }
 }
