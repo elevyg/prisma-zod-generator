@@ -2,9 +2,7 @@
 START_TIME=$SECONDS
 
 echo "Buidling package..."
-rm -r lib
 tsc
-rm -r package
 mkdir package
 
 echo "Copying files..."
