@@ -18,6 +18,6 @@ jobs:
       - name: Build
         run: ./package.sh
       - name: Publish
-        run: npm publish --access=publish
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

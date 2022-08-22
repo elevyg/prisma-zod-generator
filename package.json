@@ -42,5 +42,7 @@
     "url": "https://github.com/conte-ltd/prisma-zod-generator/issues"
   },
   "homepage": "https://github.com/conte-ltd/prisma-zod-generator#readme",
-  "private": true
+  "publishConfig": {
+    "access": "public"
+  }
 }
