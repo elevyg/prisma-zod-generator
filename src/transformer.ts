@@ -423,7 +423,7 @@ export default class Transformer {
         `schemas/objects/${this.name}Args.schema.ts`,
       ),
       `${this.getImportsForSchemas(imports)}${this.addExportObjectSchema(
-        `z.object({ select: ${this.name}SelectObjectSchema.optional(), include: ${this.name}IncludeObjectSchema.optional() })`,
+        `z.object({ select: z.lazy(() => ${this.name}SelectObjectSchema).optional(), include: z.lazy(() => ${this.name}IncludeObjectSchema).optional() })`,
         `${this.name}Args`,
       )}`,
     );
