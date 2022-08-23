@@ -92,7 +92,7 @@ will generate the following files
 5- Use generated schemas somewhere in your API logic, like middleware or decorator
 
 ```ts
-import { PostCreateOneSchema } from './prisma/generated/schemas';
+import { PostCreateOneSchema } from './src/generated/schemas';
 
 app.post('/blog', async (req, res, next) => {
   const { body } = req;

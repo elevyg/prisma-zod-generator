@@ -50,6 +50,15 @@ export async function generate(options: GeneratorOptions) {
     await obj.printObjectSchemas();
   }
 
+  for (let i = 0; i < prismaClientDmmf.datamodel.models.length; i += 1) {
+    const fields = prismaClientDmmf.datamodel.models[i]?.fields;
+    const name = prismaClientDmmf.datamodel.models[i]?.name;
+    const obj = new Transformer({ name, fields });
+    await obj.printSelectObjectSchemas();
+    await obj.printIncludeObjectSchemas();
+    await obj.printArgsObjectSchemas();
+  }
+
   const obj = new Transformer({
     modelOperations: prismaClientDmmf.mappings.modelOperations,
   });

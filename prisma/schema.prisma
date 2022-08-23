@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator zod {
@@ -25,6 +25,8 @@ model Post {
   updatedAt DateTime @updatedAt
   title     String
   content   String?
+  tags      String[]
+  info      Json?
   published Boolean  @default(false)
   viewCount Int      @default(0)
   author    User?    @relation(fields: [authorId], references: [id])
