@@ -278,7 +278,9 @@ export default class Transformer {
       return this.wrapWithZodObject(fields) + '.strict()';
     }
 
-    const wrapped = fields.map((field) => this.wrapWithZodObject(field));
+    const wrapped = fields.map(
+      (field) => this.wrapWithZodObject(field) + '.strict()',
+    );
 
     return this.wrapWithZodOUnion(wrapped);
   }
