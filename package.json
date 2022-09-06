@@ -1,6 +1,6 @@
 {
   "name": "@conte-ltd/prisma-zod-generator",
-  "version": "0.0.7",
+  "version": "0.0.6",
   "description": "Prisma 2+ generator to emit Zod schemas from your Prisma schema",
   "repository": "https://github.com/conte-ltd/prisma-zod-generator",
   "bin": {
@@ -43,7 +43,6 @@
   },
   "homepage": "https://github.com/conte-ltd/prisma-zod-generator#readme",
   "publishConfig": {
-    "@conte-ltd:registry": "https://npm.pkg.github.com",
     "access": "public"
   }
 }
