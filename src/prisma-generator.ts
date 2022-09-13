@@ -125,42 +125,48 @@ export async function generate(options: GeneratorOptions) {
       moduleSpecifier: `./${name}.schema`,
     });
 
-    name = `${modelName}Include`;
-    obj = new Transformer({
-      name,
-      fields,
-      sourceFile: project.createSourceFile(
-        path.resolve(outputDir, `objects/${name}.schema.ts`),
-        undefined,
-        { overwrite: true },
-      ),
-    });
-    sourceFile = obj.printSelectObjectSchemas(true);
-    formattedText = await formatFile(sourceFile.getFullText());
-    sourceFile.replaceWithText(formattedText);
+    const hasRelatedField = fields.some((field) => field.kind === 'object');
 
-    objectRouteFile.addExportDeclaration({
-      moduleSpecifier: `./${name}.schema`,
-    });
+    if (hasRelatedField) {
+      name = `${modelName}Include`;
+      obj = new Transformer({
+        name,
+        fields,
+        sourceFile: project.createSourceFile(
+          path.resolve(outputDir, `objects/${name}.schema.ts`),
+          undefined,
+          { overwrite: true },
+        ),
+      });
+      sourceFile = obj.printSelectObjectSchemas(true);
+      formattedText = await formatFile(sourceFile.getFullText());
+      sourceFile.replaceWithText(formattedText);
 
-    name = `${modelName}Args`;
-    obj = new Transformer({
-      name,
-      fields,
-      sourceFile: project.createSourceFile(
-        path.resolve(outputDir, `objects/${name}.schema.ts`),
-        undefined,
-        { overwrite: true },
-      ),
-    });
-    sourceFile = obj.printArgsObjectSchemas(modelName);
-    formattedText = await formatFile(sourceFile.getFullText());
-    sourceFile.replaceWithText(formattedText);
+      objectRouteFile.addExportDeclaration({
+        moduleSpecifier: `./${name}.schema`,
+      });
 
-    objectRouteFile.addExportDeclaration({
-      moduleSpecifier: `./${name}.schema`,
-    });
+      name = `${modelName}Args`;
+      obj = new Transformer({
+        name,
+        fields,
+        sourceFile: project.createSourceFile(
+          path.resolve(outputDir, `objects/${name}.schema.ts`),
+          undefined,
+          { overwrite: true },
+        ),
+      });
+      sourceFile = obj.printArgsObjectSchemas(modelName);
+      formattedText = await formatFile(sourceFile.getFullText());
+      sourceFile.replaceWithText(formattedText);
+
+      objectRouteFile.addExportDeclaration({
+        moduleSpecifier: `./${name}.schema`,
+      });
+    }
   }
+
+  const models = prismaClientDmmf.datamodel.models;
 
   for (const outputType of prismaClientDmmf.schema.outputObjectTypes.prisma) {
     if (outputType.name !== 'Query' && outputType.name !== 'Mutation') {
@@ -170,37 +176,61 @@ export async function generate(options: GeneratorOptions) {
     for (const field of outputType.fields) {
       const name = field.name;
       const modelName = getModelNameWithSelect(name);
+      const hasRelated = models
+        .filter((model) => model.name === modelName)
+        .some((model) => model.fields.some((field) => field.type === 'object'));
 
-      const fields = modelName
-        ? field.args.concat([
-            {
-              name: 'select',
-              isRequired: false,
-              isNullable: false,
-              inputTypes: [
-                {
-                  type: `${modelName}Select`,
-                  namespace: 'prisma',
-                  location: 'inputObjectTypes',
-                  isList: false,
-                },
-              ],
-            },
-            {
-              name: 'include',
-              isRequired: false,
-              isNullable: false,
-              inputTypes: [
-                {
-                  type: `${modelName}Include`,
-                  namespace: 'prisma',
-                  location: 'inputObjectTypes',
-                  isList: false,
-                },
-              ],
-            },
-          ])
+      const fields = name.startsWith('groupBy')
+        ? field.args.map((arg) => {
+            if (arg.name === 'orderBy') {
+              return {
+                ...arg,
+                isRequired: true,
+              };
+            } else if (arg.name === 'by') {
+              return {
+                ...arg,
+                inputTypes: arg.inputTypes.filter(
+                  (inputType) => inputType.isList,
+                ),
+              };
+            } else {
+              return arg;
+            }
+          })
         : field.args;
+
+      if (modelName) {
+        fields.push({
+          name: 'select',
+          isRequired: false,
+          isNullable: false,
+          inputTypes: [
+            {
+              type: `${modelName}Select`,
+              namespace: 'prisma',
+              location: 'inputObjectTypes',
+              isList: false,
+            },
+          ],
+        });
+
+        if (hasRelated) {
+          fields.push({
+            name: 'include',
+            isRequired: false,
+            isNullable: false,
+            inputTypes: [
+              {
+                type: `${modelName}Include`,
+                namespace: 'prisma',
+                location: 'inputObjectTypes',
+                isList: false,
+              },
+            ],
+          });
+        }
+      }
 
       if (name === 'executeRaw' || name === 'queryRaw') {
         continue;

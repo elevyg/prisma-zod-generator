@@ -48,6 +48,11 @@ model Category {
   posts Post[]
 }
 
+model Single {
+  id   String @id @default(uuid())
+  name String
+}
+
 enum PostStatus {
   DRAFT
   PUBLISHED

@@ -33,23 +33,20 @@ export default class Transformer {
   ) {
     const isEnum = inputType.location === 'enumTypes';
 
-    let objectSchemaLine = `${inputType.type}ObjectSchema`;
-    let enumSchemaLine = `${inputType.type}Schema`;
-
-    const schema =
-      inputType.type === this.name
-        ? objectSchemaLine
-        : isEnum
-        ? enumSchemaLine
-        : objectSchemaLine;
-
     const arr = inputType.isList ? '.array()' : '';
-
     const opt = !field.isRequired ? '.optional()' : '';
 
+    if (isEnum) {
+      const enumSchemaLine = `${inputType.type}Schema`;
+      return inputsLength === 1
+        ? `  ${field.name}: ${enumSchemaLine}${arr}${opt}`
+        : `${enumSchemaLine}${arr}${opt}`;
+    }
+
+    const objectSchemaLine = `${inputType.type}ObjectSchema`;
     return inputsLength === 1
-      ? `  ${field.name}: z.lazy(() => ${schema})${arr}${opt}`
-      : `z.lazy(() => ${schema})${arr}${opt}`;
+      ? `  ${field.name}: z.lazy(() => ${objectSchemaLine})${arr}${opt}`
+      : `z.lazy(() => ${objectSchemaLine})${arr}${opt}`;
   }
 
   wrapWithZodValidators(
@@ -332,20 +329,34 @@ export default class Transformer {
 
     this.addPrismaTypeImport();
     this.addZodImport();
-    this.sourceFile.addImportDeclaration({
-      moduleSpecifier: '../index',
-      namedImports: [
-        ...new Set(
-          relatedFields.flatMap((field) => {
-            if (field.isList) {
-              return `FindMany${field.type}Schema`;
-            } else {
-              return `${field.type}ArgsObjectSchema`;
-            }
-          }),
-        ),
-      ],
-    });
+
+    if (relatedFields.length > 0) {
+      this.sourceFile.addImportDeclaration({
+        moduleSpecifier: '../index',
+        namedImports: [
+          ...new Set(
+            relatedFields
+              .filter((field) => field.isList)
+              .map((field) => {
+                return `FindMany${field.type}Schema`;
+              }),
+          ),
+        ],
+      });
+
+      this.sourceFile.addImportDeclaration({
+        moduleSpecifier: './index',
+        namedImports: [
+          ...new Set(
+            relatedFields
+              .filter((field) => !field.isList)
+              .map((field) => {
+                return `${field.type}ArgsObjectSchema`;
+              }),
+          ),
+        ],
+      });
+    }
 
     const fieldSchemas = (isInclude ? relatedFields : fields).reduce(
       (prev, field) => {
@@ -362,21 +373,29 @@ export default class Transformer {
       ``,
     );
 
-    this.sourceFile.addVariableStatement({
-      declarationKind: VariableDeclarationKind.Const,
-      declarations: [
-        {
-          name: `${this.name}ObjectSchemaBase`,
-          initializer: `z.object({ ${fieldSchemas} })`,
-        },
-        {
-          name: `${this.name}ObjectSchema`,
-          initializer: `${this.name}ObjectSchemaBase`,
-          type: `z.ZodType<Prisma.${this.name}>`,
-        },
-      ],
-      isExported: true,
-    });
+    this.sourceFile.addVariableStatements([
+      {
+        declarationKind: VariableDeclarationKind.Const,
+        declarations: [
+          {
+            name: `${this.name}ObjectSchemaBase`,
+            initializer: `z.object({ ${fieldSchemas} })`,
+          },
+        ],
+        isExported: true,
+      },
+      {
+        declarationKind: VariableDeclarationKind.Const,
+        declarations: [
+          {
+            name: `${this.name}ObjectSchema`,
+            initializer: `${this.name}ObjectSchemaBase`,
+            type: `z.ZodType<Prisma.${this.name}>`,
+          },
+        ],
+        isExported: true,
+      },
+    ]);
 
     return this.sourceFile;
   }
@@ -392,21 +411,29 @@ export default class Transformer {
       ],
     });
 
-    this.sourceFile.addVariableStatement({
-      declarationKind: VariableDeclarationKind.Const,
-      declarations: [
-        {
-          name: `${this.name}ObjectSchemaBase`,
-          initializer: `z.object({ select: z.lazy(() => ${modelName}SelectObjectSchema).optional(), include: z.lazy(() => ${modelName}IncludeObjectSchema).optional() })`,
-        },
-        {
-          name: `${this.name}ObjectSchema`,
-          initializer: `${this.name}ObjectSchemaBase`,
-          type: `z.ZodType<Prisma.${this.name}>`,
-        },
-      ],
-      isExported: true,
-    });
+    this.sourceFile.addVariableStatements([
+      {
+        declarationKind: VariableDeclarationKind.Const,
+        declarations: [
+          {
+            name: `${this.name}ObjectSchemaBase`,
+            initializer: `z.object({ select: z.lazy(() => ${modelName}SelectObjectSchema).optional(), include: z.lazy(() => ${modelName}IncludeObjectSchema).optional() })`,
+          },
+        ],
+        isExported: true,
+      },
+      {
+        declarationKind: VariableDeclarationKind.Const,
+        declarations: [
+          {
+            name: `${this.name}ObjectSchema`,
+            initializer: `${this.name}ObjectSchemaBase`,
+            type: `z.ZodType<Prisma.${this.name}>`,
+          },
+        ],
+        isExported: true,
+      },
+    ]);
 
     return this.sourceFile;
   }
