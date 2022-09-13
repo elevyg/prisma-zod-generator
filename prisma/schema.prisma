@@ -9,27 +9,47 @@ datasource db {
 
 generator zod {
   provider = "node ./lib/generator.js"
-  output   = "./generated"
+}
+
+generator dmmf {
+  provider = "ts-node ./prisma/utils/export-dmmf.ts"
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
+  id    String  @id @default(uuid())
   email String  @unique
   name  String?
   posts Post[]
 }
 
 model Post {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  title     String
-  content   String?
-  tags      String[]
-  info      Json?
-  published Boolean  @default(false)
-  viewCount Int      @default(0)
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  Int?
-  likes     BigInt
+  /// @uuid()
+  id         String     @id @default(uuid())
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  title      String
+  content    String?
+  tags       String[]
+  info       Json?
+  published  Boolean    @default(false)
+  viewCount  Int        @default(0)
+  author     User?      @relation(fields: [authorId], references: [id])
+  authorId   String?
+  category   Category?  @relation(fields: [categoryId], references: [id])
+  categoryId String?
+  likes      BigInt
+  status     PostStatus @default(DRAFT)
+}
+
+model Category {
+  /// @uuid()
+  id    String @id @default(uuid())
+  name  String
+  posts Post[]
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  TRASH
 }

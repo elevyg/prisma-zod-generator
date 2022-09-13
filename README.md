@@ -102,9 +102,9 @@ app.post('/blog', async (req, res, next) => {
 
 ## Additional Options
 
-| Option   |  Description                                   | Type     |  Default      |
-| -------- | ---------------------------------------------- | -------- | ------------- |
-| `output` | Output directory for the generated zod schemas | `string` | `./generated` |
+| Option   |  Description                                   | Type     |  Default              |
+| -------- | ---------------------------------------------- | -------- |-----------------------|
+| `output` | Output directory for the generated zod schemas | `string` | `./generated/schemas` |
 
 Use additional options in the `schema.prisma`
 

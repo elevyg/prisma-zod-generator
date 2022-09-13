@@ -3,7 +3,7 @@ import { generate } from './prisma-generator';
 
 generatorHandler({
   onManifest: () => ({
-    defaultOutput: './generated',
+    defaultOutput: './generated/schemas',
     prettyName: 'Prisma Zod Generator',
     requiresGenerators: ['prisma-client-js'],
   }),

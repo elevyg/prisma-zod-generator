@@ -1,8 +1,13 @@
 import { parseEnvValue, getDMMF } from '@prisma/internals';
-import { EnvValue, GeneratorOptions } from '@prisma/generator-helper';
+import { DMMF, EnvValue, GeneratorOptions } from '@prisma/generator-helper';
 import removeDir from './utils/removeDir';
 import { promises as fs } from 'fs';
 import Transformer from './transformer';
+import { project } from './project';
+import path from 'path';
+import { capitalizeFirstLetter } from './utils/capitalizeFirstLetter';
+import SchemaArg = DMMF.SchemaArg;
+import { formatFile } from './utils/formatFile';
 
 export async function generate(options: GeneratorOptions) {
   const outputDir = parseEnvValue(options.generator.output as EnvValue);
@@ -28,16 +33,50 @@ export async function generate(options: GeneratorOptions) {
 
   Transformer.setOutputPath(outputDir);
 
+  const routeFile = project.createSourceFile(
+    path.resolve(outputDir, 'index.ts'),
+  );
+
+  const enumRouteFile = project.createSourceFile(
+    path.resolve(outputDir, 'enums/index.ts'),
+    undefined,
+    {
+      overwrite: true,
+    },
+  );
+
   const enumTypes = [
     ...prismaClientDmmf.schema.enumTypes.prisma,
     ...(prismaClientDmmf.schema.enumTypes.model ?? []),
   ];
   const enumNames = enumTypes.map((enumItem) => enumItem.name);
   Transformer.enumNames = enumNames ?? [];
-  const enumsObj = new Transformer({
-    enumTypes,
-  });
-  await enumsObj.printEnumSchemas();
+
+  for (const enumType of enumTypes) {
+    const enumsObj = new Transformer({
+      enumType,
+      sourceFile: project.createSourceFile(
+        path.resolve(outputDir, `enums/${enumType.name}.schema.ts`),
+        undefined,
+        { overwrite: true },
+      ),
+    });
+    const sourceFile = enumsObj.printEnumSchemas();
+    const formattedText = await formatFile(sourceFile.getFullText());
+    sourceFile.replaceWithText(formattedText);
+
+    enumRouteFile.addExportDeclaration({
+      moduleSpecifier: `./${enumType.name}.schema`,
+    });
+  }
+
+  const objectRouteFile = project.createSourceFile(
+    path.resolve(outputDir, 'objects/index.ts'),
+    undefined,
+    {
+      overwrite: true,
+    },
+  );
 
   for (
     let i = 0;
@@ -46,21 +85,170 @@ export async function generate(options: GeneratorOptions) {
   ) {
     const fields = prismaClientDmmf.schema.inputObjectTypes.prisma[i]?.fields;
     const name = prismaClientDmmf.schema.inputObjectTypes.prisma[i]?.name;
-    const obj = new Transformer({ name, fields });
-    await obj.printObjectSchemas();
+    const obj = new Transformer({
+      name,
+      fields,
+      sourceFile: project.createSourceFile(
+        path.resolve(outputDir, `objects/${name}.schema.ts`),
+        undefined,
+        { overwrite: true },
+      ),
+    });
+    const sourceFile = obj.printObjectSchemas();
+    const formattedText = await formatFile(sourceFile.getFullText());
+    sourceFile.replaceWithText(formattedText);
+
+    objectRouteFile.addExportDeclaration({
+      moduleSpecifier: `./${name}.schema`,
+    });
   }
 
   for (let i = 0; i < prismaClientDmmf.datamodel.models.length; i += 1) {
     const fields = prismaClientDmmf.datamodel.models[i]?.fields;
-    const name = prismaClientDmmf.datamodel.models[i]?.name;
-    const obj = new Transformer({ name, fields });
-    await obj.printSelectObjectSchemas();
-    await obj.printIncludeObjectSchemas();
-    await obj.printArgsObjectSchemas();
+    const modelName = prismaClientDmmf.datamodel.models[i]?.name;
+
+    let name = `${modelName}Select`;
+    let obj = new Transformer({
+      name,
+      fields,
+      sourceFile: project.createSourceFile(
+        path.resolve(outputDir, `objects/${name}.schema.ts`),
+        undefined,
+        { overwrite: true },
+      ),
+    });
+    let sourceFile = obj.printSelectObjectSchemas();
+    let formattedText = await formatFile(sourceFile.getFullText());
+    sourceFile.replaceWithText(formattedText);
+
+    objectRouteFile.addExportDeclaration({
+      moduleSpecifier: `./${name}.schema`,
+    });
+
+    name = `${modelName}Include`;
+    obj = new Transformer({
+      name,
+      fields,
+      sourceFile: project.createSourceFile(
+        path.resolve(outputDir, `objects/${name}.schema.ts`),
+        undefined,
+        { overwrite: true },
+      ),
+    });
+    sourceFile = obj.printSelectObjectSchemas(true);
+    formattedText = await formatFile(sourceFile.getFullText());
+    sourceFile.replaceWithText(formattedText);
+
+    objectRouteFile.addExportDeclaration({
+      moduleSpecifier: `./${name}.schema`,
+    });
+
+    name = `${modelName}Args`;
+    obj = new Transformer({
+      name,
+      fields,
+      sourceFile: project.createSourceFile(
+        path.resolve(outputDir, `objects/${name}.schema.ts`),
+        undefined,
+        { overwrite: true },
+      ),
+    });
+    sourceFile = obj.printArgsObjectSchemas(modelName);
+    formattedText = await formatFile(sourceFile.getFullText());
+    sourceFile.replaceWithText(formattedText);
+
+    objectRouteFile.addExportDeclaration({
+      moduleSpecifier: `./${name}.schema`,
+    });
   }
 
-  const obj = new Transformer({
-    modelOperations: prismaClientDmmf.mappings.modelOperations,
+  for (const outputType of prismaClientDmmf.schema.outputObjectTypes.prisma) {
+    if (outputType.name !== 'Query' && outputType.name !== 'Mutation') {
+      continue;
+    }
+
+    for (const field of outputType.fields) {
+      const name = field.name;
+      const modelName = getModelNameWithSelect(name);
+
+      const fields = modelName
+        ? field.args.concat([
+            {
+              name: 'select',
+              isRequired: false,
+              isNullable: false,
+              inputTypes: [
+                {
+                  type: `${modelName}Select`,
+                  namespace: 'prisma',
+                  location: 'inputObjectTypes',
+                  isList: false,
+                },
+              ],
+            },
+            {
+              name: 'include',
+              isRequired: false,
+              isNullable: false,
+              inputTypes: [
+                {
+                  type: `${modelName}Include`,
+                  namespace: 'prisma',
+                  location: 'inputObjectTypes',
+                  isList: false,
+                },
+              ],
+            },
+          ])
+        : field.args;
+
+      if (name === 'executeRaw' || name === 'queryRaw') {
+        continue;
+      }
+
+      const obj = new Transformer({
+        name,
+        fields,
+        sourceFile: project.createSourceFile(
+          path.resolve(outputDir, `${capitalizeFirstLetter(name)}.schema.ts`),
+          undefined,
+          { overwrite: true },
+        ),
+      });
+      const sourceFile = obj.printModelSchema();
+      const formattedText = await formatFile(sourceFile.getFullText());
+      sourceFile.replaceWithText(formattedText);
+
+      routeFile.addExportDeclaration({
+        moduleSpecifier: `./${capitalizeFirstLetter(name)}.schema`,
+      });
+    }
+  }
+
+  routeFile.addExportDeclaration({
+    moduleSpecifier: './enums',
   });
-  await obj.printModelSchemas();
+  routeFile.addExportDeclaration({
+    moduleSpecifier: './objects',
+  });
+
+  await project.save();
+}
+
+function getModelNameWithSelect(name: string) {
+  for (const method of [
+    'findUnique',
+    'findFirst',
+    'findMany',
+    'createOne',
+    'updateOne',
+    'upsertOne',
+    'deleteOne',
+  ]) {
+    if (name.startsWith(method)) {
+      return name.replace(method, '');
+    }
+  }
+
+  return null;
 }
