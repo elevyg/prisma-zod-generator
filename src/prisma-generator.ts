@@ -1,12 +1,11 @@
 import { parseEnvValue, getDMMF } from '@prisma/internals';
-import { DMMF, EnvValue, GeneratorOptions } from '@prisma/generator-helper';
+import { EnvValue, GeneratorOptions } from '@prisma/generator-helper';
 import removeDir from './utils/removeDir';
 import { promises as fs } from 'fs';
 import Transformer from './transformer';
 import { project } from './project';
 import path from 'path';
 import { capitalizeFirstLetter } from './utils/capitalizeFirstLetter';
-import SchemaArg = DMMF.SchemaArg;
 import { formatFile } from './utils/formatFile';
 
 export async function generate(options: GeneratorOptions) {
@@ -83,7 +82,17 @@ export async function generate(options: GeneratorOptions) {
     i < prismaClientDmmf.schema.inputObjectTypes.prisma.length;
     i += 1
   ) {
-    const fields = prismaClientDmmf.schema.inputObjectTypes.prisma[i]?.fields;
+    const fields = prismaClientDmmf.schema.inputObjectTypes.prisma[
+      i
+    ]?.fields.map((field) => ({
+      ...field,
+      inputTypes: field.inputTypes.filter((inputType) => {
+        const exclusion =
+          typeof inputType.type === 'string' &&
+          inputType.type.endsWith('RefInput');
+        return !exclusion;
+      }),
+    }));
     const name = prismaClientDmmf.schema.inputObjectTypes.prisma[i]?.name;
     const obj = new Transformer({
       name,
