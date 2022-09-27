@@ -134,7 +134,7 @@ export async function generate(options: GeneratorOptions) {
       moduleSpecifier: `./${name}.schema`,
     });
 
-    const hasRelatedField = fields.some((field) => field.kind === 'object');
+    const hasRelatedField = fields.some((field) => field.relationName);
 
     if (hasRelatedField) {
       name = `${modelName}Include`;
@@ -187,7 +187,7 @@ export async function generate(options: GeneratorOptions) {
       const modelName = getModelNameWithSelect(name);
       const hasRelated = models
         .filter((model) => model.name === modelName)
-        .some((model) => model.fields.some((field) => field.type === 'object'));
+        .some((model) => model.fields.some((field) => field.relationName));
 
       const fields = name.startsWith('groupBy')
         ? field.args.map((arg) => {
