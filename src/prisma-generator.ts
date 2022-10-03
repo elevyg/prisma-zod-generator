@@ -55,7 +55,7 @@ export async function generate(options: GeneratorOptions) {
     const enumsObj = new Transformer({
       enumType,
       sourceFile: project.createSourceFile(
-        path.resolve(outputDir, `enums/${enumType.name}.schema.ts`),
+        path.resolve(outputDir, `enums/${enumType.name}.ts`),
         undefined,
         { overwrite: true },
       ),
