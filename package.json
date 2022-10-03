@@ -1,6 +1,6 @@
 {
   "name": "@elevyg/prisma-zod-enums-generator",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Prisma 2+ generator to emit Zod Enums schemas from your Prisma schema",
   "repository": "https://github.com/elevyg/prisma-zod-generator",
   "bin": {
