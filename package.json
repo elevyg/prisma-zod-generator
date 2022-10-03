@@ -1,8 +1,8 @@
 {
-  "name": "@conte-ltd/prisma-zod-generator",
+  "name": "@elevyg/prisma-zod-enums-generator",
   "version": "0.0.12",
-  "description": "Prisma 2+ generator to emit Zod schemas from your Prisma schema",
-  "repository": "https://github.com/conte-ltd/prisma-zod-generator",
+  "description": "Prisma 2+ generator to emit Zod Enums schemas from your Prisma schema",
+  "repository": "https://github.com/elevyg/prisma-zod-generator",
   "bin": {
     "prisma-zod-generator": "lib/generator.js"
   },
@@ -11,8 +11,7 @@
     "package:publish": "./package.sh && cd package && npm publish"
   },
   "author": {
-    "name": "CONTE, Ltd.",
-    "url": "https://github.com/conte-ltd"
+    "name": "elevyg"
   },
   "keywords": [
     "prisma",
@@ -20,7 +19,8 @@
     "prisma-schema",
     "zod",
     "prisma-generator",
-    "prisma-zod-generator"
+    "prisma-zod-generator",
+    "enums"
   ],
   "license": "MIT",
   "dependencies": {
@@ -39,10 +39,7 @@
     "ts-node": "^10.9.1",
     "typescript": "^4.8.3"
   },
-  "bugs": {
-    "url": "https://github.com/conte-ltd/prisma-zod-generator/issues"
-  },
-  "homepage": "https://github.com/conte-ltd/prisma-zod-generator#readme",
+  "homepage": "https://github.com/elevyg/prisma-zod-generator#readme",
   "publishConfig": {
     "access": "public"
   }
