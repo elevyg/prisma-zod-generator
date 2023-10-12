@@ -10,8 +10,10 @@ import { formatFile } from './utils/formatFile';
 
 export async function generate(options: GeneratorOptions) {
   const outputDir = parseEnvValue(options.generator.output as EnvValue);
+  await removeDir(outputDir, false).catch(() => {
+    console.error('No directory to remove');
+  });
   await fs.mkdir(outputDir, { recursive: true });
-  await removeDir(outputDir, true);
 
   const prismaClientProvider = options.otherGenerators.find(
     (it) => parseEnvValue(it.provider) === 'prisma-client-js',
