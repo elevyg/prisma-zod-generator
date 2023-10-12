@@ -1,7 +1,7 @@
 {
   "name": "@elevyg/prisma-zod-enums-generator",
-  "version": "0.0.14",
-  "description": "Prisma 2+ generator to emit Zod Enums schemas from your Prisma schema",
+  "version": "0.0.15",
+  "description": "Prisma 5+ generator to emit Zod Enums schemas from your Prisma schema",
   "repository": "https://github.com/elevyg/prisma-zod-generator",
   "bin": {
     "prisma-zod-generator": "lib/generator.js"
@@ -27,9 +27,9 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@prisma/client": "^4.3.1",
-    "@prisma/generator-helper": "^4.3.1",
-    "@prisma/internals": "^4.3.1",
+    "@prisma/client": "^5.4.1",
+    "@prisma/generator-helper": "^5.4.2",
+    "@prisma/internals": "^5.4.2",
     "prettier": "^2.7.1",
     "ts-morph": "^16.0.0",
     "tslib": "^2.4.0",
@@ -38,7 +38,7 @@
   "devDependencies": {
     "@types/node": "^18.7.18",
     "@types/prettier": "^2.7.0",
-    "prisma": "^4.3.1",
+    "prisma": "^5.4.1",
     "ts-node": "^10.9.1",
     "typescript": "^4.8.3"
   },
